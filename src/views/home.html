@@ -1,0 +1,51 @@
+{% extends './header.html' %}
+
+{% block head %}
+{{ parent() }}
+<!-- THREE JS & its modules -->
+<script src="js/three.min.js"></script>
+
+<!-- SHADERS -->
+<script src="js/shaders/CopyShader.js"></script>
+<script src="js/shaders/DigitalGlitch.js"></script>
+<script src="js/shaders/RGBShiftShader.js"></script>
+<!-- !SHADERS -->
+
+<!--<script src="js/postprocessing.min.js"></script>-->
+<script src="js/threejs/EffectComposer.js"></script>
+<script src="js/threejs/RenderPass.js"></script>
+<script src="js/threejs/ShaderPass.js"></script>
+<script src="js/threejs/DigitalPass.js"></script>
+<script src="js/threejs/GlitchPass.js"></script>
+<!-- !THREE JS & its modules -->
+
+<!-- Other dependencies -->
+<script src="js/DSP.js"></script>
+<script src="js/SimplexNoise.js"></script>
+<!-- !Other dependencies -->
+
+<!-- Personal Scripts -->
+<script src="js/AudioVisualiser.js"></script>
+<script src="js/ThreeScene.js"></script>
+<script src="js/home.js"></script>
+<!-- !Personal Scripts -->
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="loading-container">
+        <div id="progress">
+            <div id="loading-bar"></div>
+        </div>
+    </div>
+    <div class="canvas-container">
+        <div id="main-canvas"></div> <!-- 3D background -->
+    </div>
+    <div class="container-fluid" style="height: 10vh;">
+        <input type="file" id="audio-uploader" />
+        <audio id="audio-player" controls>
+            <source src="" id="audio-src" />
+        </audio>
+    </div>
+</main>
+{% endblock %}
