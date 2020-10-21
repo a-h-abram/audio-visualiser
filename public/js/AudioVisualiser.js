@@ -10,7 +10,8 @@ class AudioVisualiser {
         this.beatThreshold = 200; // used to detect beats
         this.maxFrequencyDetected = 100; // per default
         this.peakOccurence = 0;
-
+        this.gainAdapted = false;
+        this.gainWaiting = false;
 
         this.loading = 0;
         this.audioLoaded = false;
@@ -49,25 +50,27 @@ class AudioVisualiser {
         const filterLowPass = this.audioCtx.createBiquadFilter();
 
         filter.type = "lowshelf";
-        filter.frequency.value = 800;
+        // filter.frequency.value = 800;
         // filter.gain.value = 1500;
 
         filterLowPass.type = "lowpass";
         filterLowPass.frequency.value = 20;
+        filterLowPass.gain.value = 1500;
 
-        this.gain.value = 12;
+        this.gain.gain.value = 10;
 
         // piping filters & analyser to the cloned audio
         filteredSrc.connect(filterLowPass);
         filterLowPass.connect(filter);
         filter.connect(this.gain);
         this.gain.connect(this.filterAnalyser);
-        this.filterAnalyser.connect(this.audioCtx.destination); // uncomment this part if you want to listen the filtered audio
+        // this.filterAnalyser.connect(this.audioCtx.destination); // uncomment this part if you want to listen the filtered audio
 
         // piping original audio with the audio output
-        // src.connect(this.analyser);
-        src.connect(this.audioCtx.destination);
+        src.connect(this.analyser);
+        this.analyser.connect(this.audioCtx.destination);
 
+        this.audioData = new Uint8Array(this.analyser.frequencyBinCount);
         this.filteredData = new Uint8Array(this.filterAnalyser.frequencyBinCount);
 
         // final steps (play audios & set loading values)
@@ -154,7 +157,7 @@ class AudioVisualiser {
 
     // should be called in the ThreeJs render method
     render = async () => {
-        // this.analyser.getByteFrequencyData(this.audioData);
+        this.analyser.getByteFrequencyData(this.audioData);
         this.filterAnalyser.getByteFrequencyData(this.filteredData);
 
         let isDrum = false;
@@ -165,7 +168,7 @@ class AudioVisualiser {
 
             if (this.filteredData[i] > 250) {
                 for (let k = i; k < i + 20; k++) {
-                    if (this.filteredData[k] > 250) {
+                    if (this.filteredData[k] > 230) {
                         count++;
                     } else {
                         break;
@@ -183,21 +186,21 @@ class AudioVisualiser {
             }
         }
 
-        // if peakOccurence is higher than 20, the bass are probably too loud so we decrease the gain to isolate drums
-        if (this.peakOccurence > 20) {
-            this.gain.gain.value = 10;
-        } else if (this.peakOccurence === 0) {
-            this.gain.gain.value = 12;
-        }
-
         if (isDrum) {
+            // if peakOccurence is higher than 20, the bass are probably too loud so we decrease the gain to isolate drums
+            /*if (this.peakOccurence > 20 && this.gain.gain.value > 8) {
+                this.gain.gain.value--;
+            } else if (this.peakOccurence === 0 && this.gain.gain.value < 12) {
+                this.gain.gain.value++;
+            }*/
+
             this.threeScene.rgbShiftCtrl.angle = 2.5;
             this.threeScene.rgbShiftCtrl.rgbAmount = 0.005;
             this.threeScene.meshes[0].rotation.x += 0.06 * (count / 30);
             this.threeScene.meshes[0].rotation.y += 0.07 * (count / 30);
         }
 
-        const overallAvg = this.arrayAverage(this.filteredData);
+        const overallAvg = this.arrayAverage(this.audioData);
 
         this.threeScene.updatePlane(this.threeScene.meshes[1], this.modulate(overallAvg, 0, .1, .1, .105));
     };
