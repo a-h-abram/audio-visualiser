@@ -1,5 +1,7 @@
 # Audio Visualiser 3D
 
+![AudioVisualiser](audio-visualiser.png)
+
 ## Demo
 [The live demo is available in my website](https://ahabram.fr/audio-visualiser/)
 
