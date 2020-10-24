@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const twig = require('twig');
 const bodyParser = require('body-parser');
 const app = express();
@@ -15,8 +14,7 @@ app.engine('html', twig.__express);
 
 app.set('view cache', false);
 
-app.use('/', webRoutes);
-// app.use('/api/', apiRoutes);
+app.use('/audio-visualiser', webRoutes);
 
 app.use(express.static('public'));
 app.use('/node_modules', express.static(__dirname + '/node_modules'));
@@ -26,5 +24,5 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.listen(8080,function(){
-    console.log("ahabram: Run at Port 8080");
+    console.log("Audio Visualiser: Run at Port 8080");
 });
