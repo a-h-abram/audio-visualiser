@@ -16,7 +16,7 @@ app.engine('html', twig.__express);
 
 app.set('view cache', false);
 
-app.use('/audio-visualiser', webRoutes);
+app.use('/', webRoutes);
 
 app.use(express.static('public'));
 app.use('/node_modules', express.static(__dirname + '/node_modules'));
