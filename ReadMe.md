@@ -1,16 +1,20 @@
 # Audio Visualiser 3D
 
+## Demo
+[The live demo is available in my website](https://ahabram.fr/audio-visualiser/)
+
 ## Description
 This is a website that propose an auditive experience.  
-Based on the user music, the website adapt its animations based on the drums of your music.
+Based on the user music, the website adapt its animations based on the drums of your music.  
+I advise you to put a music with some drums and bass. The algorithm is really efficient with 
+electro, trans, dupstep or even rap music.
 
 ## Dependencies
-- Three.js
-- SimplexNoise
+- Three.js - used for rendering the 3D scene
+- SimplexNoise - used to animate the plane
+- Web Audio API (js built-in library) - used to analyse the songs
 
 ## Technical Description
-I use Web Audio API to interact & analyse the songs.  
-
 Before playing music:  
 - Receiving the song from input
 - Cloning the song to apply some filters on one & play the original song with the other one
@@ -20,16 +24,15 @@ Before playing music:
 - Playing the original song & live-analysing the filtered song
 
 During the music:
-- Getting byte frequencies
-- Detecting the highest frequencies and parsing the next 20 bytes
-- If the next 4 or 9 bytes, the frequencies are still high, it's probably a drum
+- Getting the current frequencies in byte format
+- Detecting the highest frequencies and parsing the next 20/50 bytes
+- If the next 4 or 9 frequencies are still high, it's probably a drum
 - If its a drum, I send the information to the 3D scene to increase animation speed, apply some shaders, ...
 
 ## Author
-
 - Anas Habib ABRAM
 > Contact: anas-habib.abram@hotmail.com  
-> Favorite Quote: "I know how to make coffee"
+> Personal Achievement: "I know how to make coffee"
 
 ## License
 MIT
