@@ -181,7 +181,7 @@ class AudioVisualiser {
                 }
 
                 break;
-            } else if (this.filteredData[i] < 200) {
+            } else if (this.filteredData[i] < 250) {
                 this.peakOccurence = 0;
             }
         }
@@ -193,9 +193,12 @@ class AudioVisualiser {
             } else if (this.peakOccurence === 0 && this.gain.gain.value < 12) {
                 this.gain.gain.value++;
             }*/
+            this.threeScene.animationSpeed += 0.25;
+            this.threeScene.animationSpeed = Math.min(Math.max(this.threeScene.animationSpeed, 0), 3); // clamp
 
-            this.threeScene.rgbShiftCtrl.angle = 2.5;
-            this.threeScene.rgbShiftCtrl.rgbAmount = 0.005;
+
+            this.threeScene.rgbShiftCtrl.angle = 2.5 * (this.peakOccurence / 20);
+            this.threeScene.rgbShiftCtrl.rgbAmount = 0.005 * (this.peakOccurence / 10);
             this.threeScene.meshes[0].rotation.x += 0.06 * (count / 30);
             this.threeScene.meshes[0].rotation.y += 0.07 * (count / 30);
         }

@@ -12,6 +12,11 @@ class ThreeScene {
             angle: 0, // 3.5
             rgbAmount: 0 // 0.003
         };
+        this.groundPlanes = [];
+        this.animationSpeed = 2;
+        this.rain = new Rain();
+
+        this.rain.enable();
 
         this.scene = new THREE.Scene();
 
@@ -36,27 +41,34 @@ class ThreeScene {
     };
 
     setupCamera = () => {
-        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-        this.camera.position.set(0, 0, 100);
+        this.camera.position.set(0, 0, 80);
+        // this.camera.lookAt(this.rain.rain.position);
     };
 
     setupLights = () => {
-        const ambientLight = new THREE.AmbientLight(0xaaaaaa);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+
         this.scene.add(ambientLight);
 
-        let light = new THREE.DirectionalLight(0xffffff, 1.0);
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
 
-        light.position.set(0, 0, 400);
+        directionalLight.position.set(0, 100, 0);
+        directionalLight.lookAt(0, 0, 0);
 
-        this.scene.add(light);
+        this.scene.add(directionalLight);
 
         let pointLight = new THREE.PointLight(0xffffff, 1000, 100);
+        let pointLightRight = new THREE.PointLight(0x404040, 1000, 100);
+        let pointLightLeft = new THREE.PointLight(0x404040, 1000, 100);
 
         pointLight.position.set(0, 10, 10);
+        pointLightRight.position.set(50, 10, 0);
+        pointLightLeft.position.set(-50, 10, 0);
+        // pointLight.power = 1000;
 
-        // this.camera.lookAt(pointLight.position);
-        this.scene.add(pointLight)
+        this.scene.add(pointLight, pointLightRight, pointLightLeft);
     };
 
     setupEffectComposer = () => {
@@ -93,7 +105,7 @@ class ThreeScene {
         this.scene.add(cubeMesh);
         this.meshes.push(cubeMesh);
 
-        const planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
+        const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 40, 40);
         const planeMaterial = new THREE.MeshLambertMaterial({
             color: 0x6904ce,
             side: THREE.DoubleSide,
@@ -101,13 +113,15 @@ class ThreeScene {
         });
 
         let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        let plane2 = new THREE.Mesh(planeGeometry, planeMaterial);
 
         plane.rotation.x = -0.5 * Math.PI;
         plane.position.set(0, -30, 0);
+        plane2.rotation.x = -0.5 * Math.PI;
+        plane2.position.set(0, -30, -2000);
 
-        // this.camera.lookAt(plane.position);
-
-        this.scene.add(plane);
+        this.groundPlanes.push(plane, plane2);
+        this.scene.add(plane, plane2);
         this.meshes.push(plane);
     };
 
@@ -119,6 +133,25 @@ class ThreeScene {
             this.rgbShiftCtrl.rgbAmount -= 0.001;
         } if (this.rgbShiftCtrl.angle > 0) {
             this.rgbShiftCtrl.angle -= 0.3;
+        }
+    };
+
+    // moving those planes give the impression to move forward
+    movePlanes = () => {
+        this.groundPlanes.forEach((plane) => {
+            plane.position.z += this.animationSpeed;
+
+            if (plane.position.z >= 2000) {
+                plane.position.z = -2000;
+            }
+        });
+    };
+
+    updateAnimationSpeed = () => {
+        if (this.animationSpeed > 2) {
+            this.animationSpeed -= 0.13;
+        } else if (this.animationSpeed < 2) {
+            this.animationSpeed += 0.13;
         }
     };
 
@@ -140,12 +173,20 @@ class ThreeScene {
             this.audioVisualiser.render();
         }
 
+        // update objects in the scene
         this.meshes[0].rotation.x += 0.01;
         this.meshes[0].rotation.y += 0.02;
+        // this.planeMaterial.map.offset.x += 1;
 
+        this.rain.update();
+        this.movePlanes();
+
+        // update post-process effects
         this.updateRgbShift();
 
         this.composer.render();
+
+        this.updateAnimationSpeed();
     };
 
     reset = () => {
