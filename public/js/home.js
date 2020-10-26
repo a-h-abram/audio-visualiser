@@ -16,6 +16,9 @@ $(document).ready(_ => {
         audioPlayer.load();
 
         await threeScene.loadAudio(audio, audioPlayer);
+
+        $('#upload-section').fadeOut();
+        $('#btn-redo').fadeIn();
     }, false);
 
     audioPlayer.addEventListener('pause', () => {
@@ -36,3 +39,11 @@ $(document).ready(_ => {
         }
     });
 });
+
+getFile = () => {
+    document.getElementById("audio-uploader").click();
+};
+
+reload = () => {
+    window.location.reload();
+};

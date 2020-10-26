@@ -14,14 +14,20 @@ class ThreeScene {
         };
         this.groundPlanes = [];
         this.animationSpeed = 2;
-        this.rain = new Rain();
-
-        this.rain.enable();
-
         this.scene = new THREE.Scene();
+
+        this.clouds = new Clouds(this.scene);
+        this.rain = new Rain(this.scene);
+
+        if (Math.floor(Math.random() * 3) === 0) {
+            this.rain.enable();
+        }
 
         this.setupRenderer();
         this.setupCamera();
+
+        this.rythmLights = new RythmLights(this.scene, this.camera);
+
         this.setupLights();
         this.setupMainScene();
         this.setupEffectComposer();
@@ -98,12 +104,14 @@ class ThreeScene {
     };
 
     setupMainScene = () => {
-        let geometry = new THREE.CubeGeometry(15, 15, 15);
+        /*let geometry = new THREE.CubeGeometry(15, 15, 15);
         let material = new THREE.MeshPhongMaterial({ color: 0xff0000, wireframe: true });
         let cubeMesh = new THREE.Mesh(geometry, material);
 
         this.scene.add(cubeMesh);
-        this.meshes.push(cubeMesh);
+        this.meshes.push(cubeMesh);*/
+
+        this.scene.fog = new THREE.FogExp2(0x11111f, 0.002);
 
         const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 40, 40);
         const planeMaterial = new THREE.MeshLambertMaterial({
@@ -123,6 +131,12 @@ class ThreeScene {
         this.groundPlanes.push(plane, plane2);
         this.scene.add(plane, plane2);
         this.meshes.push(plane);
+
+        // test clouds
+        /*this.camera.position.z = 1;
+        this.camera.rotation.x = 1.16;
+        this.camera.rotation.y = -0.12;
+        this.camera.rotation.z = 0.27;*/
     };
 
     updateRgbShift = () => {
@@ -162,7 +176,7 @@ class ThreeScene {
             // TODO: Initiliazing the song
             const loadPercentage = this.audioVisualiser.loading;
 
-            this.loadingBar.style.width = loadPercentage + "%";
+            // this.loadingBar.style.width = loadPercentage + "%";
 
             if (loadPercentage === 100) {
                 this.loading = false;
@@ -173,13 +187,22 @@ class ThreeScene {
             this.audioVisualiser.render();
         }
 
-        // update objects in the scene
-        this.meshes[0].rotation.x += 0.01;
-        this.meshes[0].rotation.y += 0.02;
-        // this.planeMaterial.map.offset.x += 1;
+        if (this.audioVisualiser.isDrum) {
+            this.animationSpeed = 3;
+            this.rgbShiftCtrl.angle = 2.5 * (this.audioVisualiser.peakOccurence / 20);
+            this.rgbShiftCtrl.rgbAmount = 0.005 * (this.audioVisualiser.peakOccurence / 10);
+            this.clouds.willFlash = true;
 
+            if (this.audioVisualiser.peakOccurence === 5) {
+                this.rythmLights.sendLights(false);
+            }
+        }
+
+        // update objects in the scene
+        this.clouds.update();
         this.rain.update();
         this.movePlanes();
+        this.rythmLights.update();
 
         // update post-process effects
         this.updateRgbShift();

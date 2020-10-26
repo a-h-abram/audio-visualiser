@@ -8,10 +8,63 @@ main {
     height: 100%;
 }
 
+.flex-centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .canvas-container {
     z-index: 1000;
     width: 100vw;
     height: 100vh;
+}
+
+.canvas-inside {
+    position: absolute;
+}
+
+.canvas-music-controller {
+    width: 100%;
+    bottom: .2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.audio-ctrl {
+    width: 80% !important;
+}
+
+#btn-upload {
+    position: relative;
+    text-align: center;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 1.5em;
+    color: white;
+}
+
+#btn-redo {
+    display: none;
+    position: absolute;
+    right: 1em;
+    color: white !important;
+    font-size: 1.2em !important;
+}
+
+.canvas-footer {
+    width: 100%;
+    bottom: .2em;
+    left: .2em;
+    right: .2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.canvas-footer-right {
+    justify-content: flex-end !important;
 }
 
 #main-canvas {

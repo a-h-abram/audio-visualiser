@@ -25,6 +25,8 @@
 <!-- !Other dependencies -->
 
 <!-- Personal Scripts -->
+<script src="js/RythmLights.js"></script>
+<script src="js/Clouds.js"></script>
 <script src="js/Rain.js"></script>
 <script src="js/AudioVisualiser.js"></script>
 <script src="js/ThreeScene.js"></script>
@@ -34,19 +36,31 @@
 
 {% block content %}
 <main>
-    <div class="loading-container">
+    <!--<div class="loading-container">
         <div id="progress">
             <div id="loading-bar"></div>
         </div>
-    </div>
+    </div>-->
     <div class="canvas-container">
-        <div id="main-canvas"></div> <!-- 3D background -->
-    </div>
-    <div class="container-fluid" style="height: 10vh;">
-        <input type="file" id="audio-uploader" />
-        <audio id="audio-player" controls>
-            <source src="" id="audio-src" />
-        </audio>
+        <div id="main-canvas" class="flex-centered">
+            <div class="canvas-inside" id="upload-section">
+                <div id="btn-upload" onclick="getFile()">Click to upload your music</div>
+                <!-- this is your file input tag, so i hide it!-->
+                <div style='height: 0;width: 0;overflow: hidden;'>
+                    <input id="audio-uploader" type="file" value="upload"/>
+                </div>
+            </div>
+
+            <div class="canvas-inside canvas-music-controller">
+                <audio class="audio-ctrl" id="audio-player" controls>
+                    <source src="" id="audio-src"/>
+                </audio>
+
+                <a id="btn-redo" onclick="reload()" type="button">
+                    <i class="fas fa-redo"></i>
+                </a>
+            </div>
+        </div> <!-- 3D background -->
     </div>
 </main>
 {% endblock %}

@@ -4,7 +4,8 @@
  * Per default, the rain is invisible, you need to call enable() method to set it visible in the scene
  */
 class Rain {
-    constructor(rainNbr = 1500) {
+    constructor(scene, rainNbr = 1500) {
+        this.scene = scene;
         this.rainNbr = rainNbr;
         this.enabled = false;
         this.rainGeometry = new THREE.Geometry();
@@ -12,11 +13,10 @@ class Rain {
         for (let i = 0; i < this.rainNbr; i++) {
             let rainDrop = new THREE.Vector3(
                 Math.random() * 400 - 200,
-                Math.random() * 500 - 250,
+                Math.random() * 600 - 450,
                 Math.random() * 400 - 200,
             );
 
-            rainDrop.velocity = {};
             rainDrop.velocity = 0;
 
             this.rainGeometry.vertices.push(rainDrop)
@@ -24,13 +24,15 @@ class Rain {
 
         const material = new THREE.PointsMaterial({
             color: 0xaaaaaa,
-            size: 0.1,
+            size: 0.2,
             transparent: false
         });
 
         this.mesh = new THREE.Points(this.rainGeometry, material);
         this.mesh.visible = false;
         this.mesh.position.set(0, 10, 100);
+
+        this.scene.add(this.mesh);
     }
 
     update = () => {

@@ -7,11 +7,9 @@ class AudioVisualiser {
         this.offlineAudio = null;
         this.parsingAudio = false;
         this.fftSize = 4096; // fast fourier transform lower to be easier to compute windows*/
-        this.beatThreshold = 200; // used to detect beats
-        this.maxFrequencyDetected = 100; // per default
         this.peakOccurence = 0;
-        this.gainAdapted = false;
-        this.gainWaiting = false;
+        this.isDrum = false;
+        this.sinceLastDrum = 0;
 
         this.loading = 0;
         this.audioLoaded = false;
@@ -156,11 +154,12 @@ class AudioVisualiser {
     };
 
     // should be called in the ThreeJs render method
-    render = async () => {
+    render = () => {
+        this.sinceLastDrum += this.threeScene.clock.getDelta();
         this.analyser.getByteFrequencyData(this.audioData);
         this.filterAnalyser.getByteFrequencyData(this.filteredData);
 
-        let isDrum = false;
+        this.isDrum = false;
         let count = 0;
 
         for (let i = 0; i < 100; i++) {
@@ -177,7 +176,8 @@ class AudioVisualiser {
 
                 if (count > 4 && count < 9) {
                     this.peakOccurence++;
-                    isDrum = true;
+                    this.isDrum = true;
+                    this.sinceLastDrum = 0;
                 }
 
                 break;
@@ -186,26 +186,9 @@ class AudioVisualiser {
             }
         }
 
-        if (isDrum) {
-            // if peakOccurence is higher than 20, the bass are probably too loud so we decrease the gain to isolate drums
-            /*if (this.peakOccurence > 20 && this.gain.gain.value > 8) {
-                this.gain.gain.value--;
-            } else if (this.peakOccurence === 0 && this.gain.gain.value < 12) {
-                this.gain.gain.value++;
-            }*/
-            this.threeScene.animationSpeed += 0.25;
-            this.threeScene.animationSpeed = Math.min(Math.max(this.threeScene.animationSpeed, 0), 3); // clamp
-
-
-            this.threeScene.rgbShiftCtrl.angle = 2.5 * (this.peakOccurence / 20);
-            this.threeScene.rgbShiftCtrl.rgbAmount = 0.005 * (this.peakOccurence / 10);
-            this.threeScene.meshes[0].rotation.x += 0.06 * (count / 30);
-            this.threeScene.meshes[0].rotation.y += 0.07 * (count / 30);
-        }
-
         const overallAvg = this.arrayAverage(this.audioData);
 
-        this.threeScene.updatePlane(this.threeScene.meshes[1], this.modulate(overallAvg, 0, .1, .1, .105));
+        this.threeScene.updatePlane(this.threeScene.groundPlanes[0], this.modulate(overallAvg, 0, .1, .1, .105));
     };
 
     arrayAverage = (arr) => {
