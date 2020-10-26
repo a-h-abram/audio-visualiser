@@ -24,7 +24,15 @@ main {
     position: absolute;
 }
 
-.canvas-music-controller {
+.canvas-top {
+    width: 100%;
+    top: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.canvas-bottom {
     width: 100%;
     bottom: .2em;
     display: flex;
@@ -34,6 +42,12 @@ main {
 
 .audio-ctrl {
     width: 80% !important;
+}
+
+.btn-top {
+    color: white !important;
+    font-size: 1.5em !important;
+    padding: .5em;
 }
 
 #btn-upload {

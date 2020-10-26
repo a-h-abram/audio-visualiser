@@ -43,6 +43,19 @@
     </div>-->
     <div class="canvas-container">
         <div id="main-canvas" class="flex-centered">
+            <div class="canvas-inside canvas-top">
+                <div style="position: absolute;right: 1em;">
+                    <a class="btn-top" href="https://github.com/a-h-abram/audio-visualiser" target="_blank"
+                       type="button">
+                        <i class="fas fa-code"></i>
+                    </a>
+
+                    <a class="btn-top" href="https://github.com/a-h-abram" target="_blank" type="button">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+
             <div class="canvas-inside" id="upload-section">
                 <div id="btn-upload" onclick="getFile()">Click to upload your music</div>
                 <!-- this is your file input tag, so i hide it!-->
@@ -51,7 +64,7 @@
                 </div>
             </div>
 
-            <div class="canvas-inside canvas-music-controller">
+            <div class="canvas-inside canvas-bottom">
                 <audio class="audio-ctrl" id="audio-player" controls>
                     <source src="" id="audio-src"/>
                 </audio>
