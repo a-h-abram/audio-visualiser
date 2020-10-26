@@ -9,12 +9,12 @@
 This is a website that propose an auditive experience.  
 Based on the user music, the website adapt its animations based on the drums of your music.  
 I advise you to put a music with some drums and bass. The algorithm is much more efficient with 
-electro, trans, dupstep or even rap music.
+electro, trans, dupstep or even rap music.  
+I used Web Audio API to do all audio processing.
 
 ## Dependencies
 - Three.js - used for rendering the 3D scene
-- SimplexNoise - used to animate the plane
-- Web Audio API (js built-in library) - used to analyse the songs
+- SimplexNoise - used to animate the ground plane
 
 ## Technical Description
 Before playing music:  
@@ -38,4 +38,4 @@ During the music:
 > Personal Achievement: "I know how to make coffee"
 
 ## License
-MIT
+MIT  
