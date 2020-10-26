@@ -13,7 +13,7 @@ class Clouds {
 
         let loader = new THREE.TextureLoader();
 
-        loader.load("../imgs/smoke.png", (texture) => {
+        loader.load(window.location.href + "imgs/smoke.png", (texture) => {
             const cloudGeo = new THREE.PlaneBufferGeometry(200, 200);
             const cloudMaterial = new THREE.MeshLambertMaterial({
                 map: texture,
