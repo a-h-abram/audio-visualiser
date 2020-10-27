@@ -9,6 +9,7 @@ class AudioVisualiser {
         this.fftSize = 4096; // fast fourier transform lower to be easier to compute windows*/
         this.peakOccurence = 0;
         this.isDrum = false;
+        this.isPlaying = false;
         this.sinceLastDrum = 0;
 
         this.loading = 0;
@@ -181,7 +182,7 @@ class AudioVisualiser {
                 }
 
                 break;
-            } else if (this.filteredData[i] < 250) {
+            } else {
                 this.peakOccurence = 0;
             }
         }
@@ -212,6 +213,7 @@ class AudioVisualiser {
         if (this.audioPlayer && this.filteredPlayer) {
             this.filteredPlayer.pause();
             this.audioPlayer.pause();
+            this.isPlaying = false;
         }
     };
 
@@ -219,6 +221,7 @@ class AudioVisualiser {
         if (this.audioPlayer && this.filteredPlayer) {
             this.filteredPlayer.play();
             this.audioPlayer.play();
+            this.isPlaying = true;
         }
     };
 

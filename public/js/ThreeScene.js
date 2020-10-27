@@ -31,12 +31,22 @@ class ThreeScene {
         this.setupLights();
         this.setupMainScene();
         this.setupEffectComposer();
-        // this.setupGlitchEffect();
-        this.setupRGBShift();
+        this.setupShaders();
+	this.setupListeners();
     }
 
     run = () => {
         this.animate();
+    };
+
+    setupListeners = () => {
+        window.addEventListener( 'resize', _ => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.composer.setSize(window.innerWidth, window.innerHeight);
+        }, false );
     };
 
     setupRenderer = () => {
@@ -92,7 +102,7 @@ class ThreeScene {
         console.log(glitchPass);
     };
 
-    setupRGBShift = () => {
+    setupShaders = () => {
         // console.log(THREE.RGBShiftShader);
         const rgbShift = new THREE.ShaderPass(THREE.RGBShiftShader);
 
@@ -100,20 +110,16 @@ class ThreeScene {
         this.rgbShiftCtrl.shader.uniforms.amount.value = this.rgbShiftCtrl.rgbAmount;
         this.rgbShiftCtrl.shader.uniforms.angle.value = this.rgbShiftCtrl.angle;
 
+        this.flashShader = new THREE.ShaderPass(THREE.FlashShader);
+
         this.composer.addPass(rgbShift);
+        this.composer.addPass(this.flashShader);
     };
 
     setupMainScene = () => {
-        /*let geometry = new THREE.CubeGeometry(15, 15, 15);
-        let material = new THREE.MeshPhongMaterial({ color: 0xff0000, wireframe: true });
-        let cubeMesh = new THREE.Mesh(geometry, material);
-
-        this.scene.add(cubeMesh);
-        this.meshes.push(cubeMesh);*/
-
         this.scene.fog = new THREE.FogExp2(0x11111f, 0.002);
 
-        const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 40, 40);
+        const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 30, 30);
         const planeMaterial = new THREE.MeshLambertMaterial({
             color: 0x6904ce,
             side: THREE.DoubleSide,
@@ -172,20 +178,16 @@ class ThreeScene {
     animate = () => {
         requestAnimationFrame(this.animate);
 
-        if (!this.audioVisualiser.audioLoaded) {
-            // TODO: Initiliazing the song
-            const loadPercentage = this.audioVisualiser.loading;
-
-            // this.loadingBar.style.width = loadPercentage + "%";
-
-            if (loadPercentage === 100) {
-                this.loading = false;
-                this.audioLoaded = true;
+        if (!this.audioVisualiser.audioLoaded || !this.audioVisualiser.isPlaying) {
+            if (Math.floor(Math.random() * 100) === 0) {
+                this.rgbShiftCtrl.angle = 2.5 * Math.floor(Math.random() * 2);
+                this.rgbShiftCtrl.rgbAmount = 0.005 * Math.floor(Math.random() * 3);
             }
-            // TODO: play song "Audio has been initilized ..."
         } else {
             this.audioVisualiser.render();
         }
+
+        this.flashShader.uniforms.white.value = 0;
 
         if (this.audioVisualiser.isDrum) {
             this.animationSpeed = 3;
@@ -193,7 +195,9 @@ class ThreeScene {
             this.rgbShiftCtrl.rgbAmount = 0.005 * (this.audioVisualiser.peakOccurence / 10);
             this.clouds.willFlash = true;
 
-            if (this.audioVisualiser.peakOccurence === 5) {
+            if (this.audioVisualiser.peakOccurence === 1) {
+                this.flashShader.uniforms.white.value = .015;
+            } else if (this.audioVisualiser.peakOccurence === 5) {
                 this.rythmLights.sendLights(false);
             }
         }

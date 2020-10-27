@@ -22,21 +22,21 @@ class RythmLights {
         light1.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light1.available = true;
         light1.index = 0;
-        light1.power = 1000;
+        light1.power = 0;
 
         let light2 = new THREE.PointLight(0xff0000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
 
         light2.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light2.available = true;
         light2.index = 1;
-        light2.power = 1000;
+        light2.power = 0;
 
         let light3 = new THREE.PointLight(0x008000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
 
         light3.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light3.available = true;
         light3.index = 2;
-        light3.power = 1000;
+        light3.power = 0;
 
         this.lights.push(light1, light2, light3);
         this.lightsAvailable.push(light1, light2, light3);
@@ -85,6 +85,7 @@ class RythmLights {
             // send lights to pos
             light.available = false;
             light.position.set(this.camera.position.x, light.position.y, this.camera.position.z);
+            light.power = 1000;
 
             this.lightsAvailable.splice(i, 1);
         }
@@ -97,7 +98,7 @@ class RythmLights {
                 this.lights[i].position.z += this.lights[i].direction.z * this.LIGHT_SPEED;
 
                 if (this.lights[i].position.z < -5000) {
-                    console.log('limit reached !');
+                    this.lights[i].power = 0;
                     this.lights[i].available = true;
                     this.lightsAvailable.push(this.lights[i]);
                 }
