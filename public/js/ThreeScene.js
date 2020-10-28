@@ -7,6 +7,8 @@ class ThreeScene {
         this.meshes = [];
         this.noise = new SimplexNoise();
         this.audioVisualiser = new AudioVisualiser(this);
+        this.flashShader = null;
+        this.fxaaShader = null;
         this.rgbShiftCtrl = {
             shader: null,
             angle: 0, // 3.5
@@ -40,12 +42,21 @@ class ThreeScene {
     };
 
     setupListeners = () => {
-        window.addEventListener( 'resize', _ => {
+        window.addEventListener('resize', _ => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
 
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(window.devicePixelRatio);
             this.composer.setSize(window.innerWidth, window.innerHeight);
+            this.composer.setPixelRatio(window.devicePixelRatio);
+
+            const pixelRatio = this.renderer.getPixelRatio();
+
+            if (this.fxaaShader) {
+                this.fxaaShader.material.uniforms.resolution.value.x = 1 / (window.innerWidth * pixelRatio);
+                this.fxaaShader.material.uniforms.resolution.value.y = 1 / (window.innerHeight * pixelRatio);
+            }
         }, false );
     };
 
@@ -53,6 +64,8 @@ class ThreeScene {
         this.renderer = new THREE.WebGLRenderer();
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+
         document.getElementById('main-canvas').appendChild(this.renderer.domElement);
     };
 
@@ -60,36 +73,24 @@ class ThreeScene {
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
         this.camera.position.set(0, 0, 80);
-        // this.camera.lookAt(this.rain.rain.position);
     };
 
     setupLights = () => {
         const ambientLight = new THREE.AmbientLight(0x404040);
-
-        this.scene.add(ambientLight);
-
         let directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        let pointLight = new THREE.PointLight(0xffffff, 1000, 100);
 
         directionalLight.position.set(0, 100, 0);
         directionalLight.lookAt(0, 0, 0);
-
-        this.scene.add(directionalLight);
-
-        let pointLight = new THREE.PointLight(0xffffff, 1000, 100);
-        let pointLightRight = new THREE.PointLight(0x404040, 1000, 100);
-        let pointLightLeft = new THREE.PointLight(0x404040, 1000, 100);
-
         pointLight.position.set(0, 10, 10);
-        pointLightRight.position.set(50, 10, 0);
-        pointLightLeft.position.set(-50, 10, 0);
-        // pointLight.power = 1000;
 
-        this.scene.add(pointLight, pointLightRight, pointLightLeft);
+        this.scene.add(ambientLight, directionalLight, pointLight);
     };
 
     setupEffectComposer = () => {
         this.composer = new THREE.EffectComposer(this.renderer);
 
+        this.composer.setPixelRatio(window.devicePixelRatio);
         this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
     };
 
@@ -97,9 +98,8 @@ class ThreeScene {
         const glitchPass = new THREE.GlitchPass();
 
         glitchPass.renderToScreen = true;
-        this.composer.addPass(glitchPass);
 
-        console.log(glitchPass);
+        this.composer.addPass(glitchPass);
     };
 
     setupShaders = () => {
@@ -112,8 +112,16 @@ class ThreeScene {
 
         this.flashShader = new THREE.ShaderPass(THREE.FlashShader);
 
+        this.fxaaShader = new THREE.ShaderPass(THREE.FXAAShader);
+
+        const pixelRatio = this.renderer.getPixelRatio();
+
+        this.fxaaShader.material.uniforms.resolution.value.x = 1 / ( window.innerWidth * pixelRatio);
+        this.fxaaShader.material.uniforms.resolution.value.y = 1 / ( window.innerHeight * pixelRatio);
+
         this.composer.addPass(rgbShift);
         this.composer.addPass(this.flashShader);
+        this.composer.addPass(this.fxaaShader);
     };
 
     setupMainScene = () => {
@@ -137,12 +145,6 @@ class ThreeScene {
         this.groundPlanes.push(plane, plane2);
         this.scene.add(plane, plane2);
         this.meshes.push(plane);
-
-        // test clouds
-        /*this.camera.position.z = 1;
-        this.camera.rotation.x = 1.16;
-        this.camera.rotation.y = -0.12;
-        this.camera.rotation.z = 0.27;*/
     };
 
     updateRgbShift = () => {
@@ -205,8 +207,8 @@ class ThreeScene {
         // update objects in the scene
         this.clouds.update();
         this.rain.update();
-        this.movePlanes();
         this.rythmLights.update();
+        this.movePlanes();
 
         // update post-process effects
         this.updateRgbShift();
@@ -237,6 +239,7 @@ class ThreeScene {
 
     updatePlane = (mesh, distortionFr) => {
         const self = this;
+
         mesh.geometry.vertices.forEach(function (vertex, i) {
             const amp = 2;
             const time = Date.now();
