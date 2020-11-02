@@ -1,4 +1,8 @@
 class ThreeScene {
+    SCENE_POS = {
+        GROUND: 0,
+        SKY: 1
+    };
     constructor() {
         this.clock = new THREE.Clock();
         this.audioLoaded = false;
@@ -18,23 +22,16 @@ class ThreeScene {
         this.animationSpeed = 2;
         this.scene = new THREE.Scene();
 
-        this.clouds = new Clouds(this.scene);
-        this.rain = new Rain(this.scene);
-
-        if (Math.floor(Math.random() * 3) === 0) {
-            this.rain.enable();
-        }
-
         this.setupRenderer();
         this.setupCamera();
 
-        this.rythmLights = new RythmLights(this.scene, this.camera);
+        this.rythmLights = new RythmLights(this.scene, this.camera.camera);
 
         this.setupLights();
         this.setupMainScene();
         this.setupEffectComposer();
         this.setupShaders();
-	this.setupListeners();
+	    this.setupListeners();
     }
 
     run = () => {
@@ -43,8 +40,8 @@ class ThreeScene {
 
     setupListeners = () => {
         window.addEventListener('resize', _ => {
-            this.camera.aspect = window.innerWidth / window.innerHeight;
-            this.camera.updateProjectionMatrix();
+            this.camera.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.camera.updateProjectionMatrix();
 
             this.renderer.setSize(window.innerWidth, window.innerHeight);
             this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -65,14 +62,18 @@ class ThreeScene {
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 0.5;
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         document.getElementById('main-canvas').appendChild(this.renderer.domElement);
     };
 
     setupCamera = () => {
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-        this.camera.position.set(0, 0, 80);
+        this.camera = new Camera();
+        this.camera.scenePos = this.SCENE_POS.GROUND;
     };
 
     setupLights = () => {
@@ -91,7 +92,7 @@ class ThreeScene {
         this.composer = new THREE.EffectComposer(this.renderer);
 
         this.composer.setPixelRatio(window.devicePixelRatio);
-        this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
+        this.composer.addPass(new THREE.RenderPass(this.scene, this.camera.camera));
     };
 
     setupGlitchEffect = () => {
@@ -127,6 +128,14 @@ class ThreeScene {
     setupMainScene = () => {
         this.scene.fog = new THREE.FogExp2(0x11111f, 0.002);
 
+        this.rainClouds = new Clouds(this.scene);
+        this.clouds = new Clouds(this.scene, 200, 'imgs/white_smoke.png', 350);
+        this.rain = new Rain(this.scene);
+
+        if (Math.floor(Math.random() * 3) === 0) {
+            this.rain.enable();
+        }
+
         const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 30, 30);
         const planeMaterial = new THREE.MeshLambertMaterial({
             color: 0x6904ce,
@@ -145,6 +154,25 @@ class ThreeScene {
         this.groundPlanes.push(plane, plane2);
         this.scene.add(plane, plane2);
         this.meshes.push(plane);
+
+        // Setup Sky
+        this.sky = new Sky();
+        this.sky.scale.setScalar(450000);
+        this.scene.add(this.sky);
+
+        this.sun = new THREE.Vector3();
+
+        this.timeEffectCtrl = {
+            turbidity: 10,
+            rayleigh: 3,
+            mieCoefficient: 0.005,
+            mieDirectionalG: 0.7,
+            inclination: 0.49, // elevation / inclination
+            azimuth: 0.25,//0.25, // Facing front,
+            exposure: 0.06// this.renderer.toneMappingExposure
+        };
+
+        console.log(this.timeEffectCtrl);
     };
 
     updateRgbShift = () => {
@@ -153,8 +181,10 @@ class ThreeScene {
 
         if (this.rgbShiftCtrl.rgbAmount > 0) {
             this.rgbShiftCtrl.rgbAmount -= 0.001;
+            this.rgbShiftCtrl.rgbAmount.clamp(0, 1);
         } if (this.rgbShiftCtrl.angle > 0) {
             this.rgbShiftCtrl.angle -= 0.3;
+            this.rgbShiftCtrl.angle.clamp(0, 2);
         }
     };
 
@@ -177,6 +207,44 @@ class ThreeScene {
         }
     };
 
+    updateSky = () => {
+        if (this.camera.isMoving && this.camera.nextScenePos === this.SCENE_POS.SKY) {
+            gsap.to(this.timeEffectCtrl, {
+                duration: this.camera.duration,
+                azimuth: 0.25,
+                rayleigh: 1.46,
+                turbidity: 14,
+                exposure: 0.5
+            });
+        } else if (this.camera.isMoving && this.camera.nextScenePos === this.SCENE_POS.GROUND) {
+            gsap.to(this.timeEffectCtrl, {
+                duration: this.camera.duration,
+                azimuth: 0.25,
+                rayleigh: 3,
+                turbidity: 10,
+                exposure: 0.06
+            });
+        }
+
+        let uniforms = this.sky.material.uniforms;
+
+        uniforms.turbidity.value = this.timeEffectCtrl.turbidity;
+        uniforms.rayleigh.value = this.timeEffectCtrl.rayleigh;
+        uniforms.mieCoefficient.value = this.timeEffectCtrl.mieCoefficient;
+        uniforms.mieDirectionalG.value = this.timeEffectCtrl.mieDirectionalG;
+
+        const theta = Math.PI * (this.timeEffectCtrl.inclination - 0.5);
+        const phi = 2 * Math.PI * (this.timeEffectCtrl.azimuth - 0.5);
+
+        this.sun.x = Math.cos(phi);
+        this.sun.y = Math.sin(phi) * Math.sin(theta);
+        this.sun.z = Math.sin(phi) * Math.cos(theta);
+
+        uniforms.sunPosition.value.copy(this.sun);
+
+        this.renderer.toneMappingExposure = this.timeEffectCtrl.exposure;
+    };
+
     animate = () => {
         requestAnimationFrame(this.animate);
 
@@ -193,22 +261,38 @@ class ThreeScene {
 
         if (this.audioVisualiser.isDrum) {
             this.animationSpeed = 3;
-            this.rgbShiftCtrl.angle = 2.5 * (this.audioVisualiser.peakOccurence / 20);
-            this.rgbShiftCtrl.rgbAmount = 0.005 * (this.audioVisualiser.peakOccurence / 10);
-            this.clouds.willFlash = true;
+            console.log(this.audioVisualiser.peakOccurence);
+
+            if (this.audioVisualiser.peakOccurence > 5) {
+                this.rgbShiftCtrl.angle = 2.5 * (this.audioVisualiser.peakOccurence / 20) * ((Math.floor(Math.random() * 2) + 1 === 1) ? 1 : -1);
+                this.rgbShiftCtrl.rgbAmount = 0.005 * (this.audioVisualiser.peakOccurence / 20);
+            }
+
+            this.rainClouds.willFlash = true;
 
             if (this.audioVisualiser.peakOccurence === 1) {
                 this.flashShader.uniforms.white.value = .015;
             } else if (this.audioVisualiser.peakOccurence === 5) {
-                this.rythmLights.sendLights(false);
+                this.rythmLights.sendLights(this.audioVisualiser.averageFrequencies > 200);
             }
+        }
+
+        if (this.audioVisualiser.highFreqAvgCount > 150 && this.camera.scenePos !== this.SCENE_POS.SKY
+            && !this.camera.isMoving) {
+            this.camera.moveTop(1, this.SCENE_POS.SKY);
+        } else if (this.audioVisualiser.lowFreqAvgCount > 200 && this.camera.scenePos !== this.SCENE_POS.GROUND
+            && !this.camera.isMoving) {
+            this.camera.moveBot(1, this.SCENE_POS.GROUND);
         }
 
         // update objects in the scene
         this.clouds.update();
+        this.rainClouds.update();
         this.rain.update();
         this.rythmLights.update();
         this.movePlanes();
+        this.updateSky();
+        this.camera.update();
 
         // update post-process effects
         this.updateRgbShift();
@@ -250,5 +334,31 @@ class ThreeScene {
         mesh.geometry.normalsNeedUpdate = true;
         mesh.geometry.computeVertexNormals();
         mesh.geometry.computeFaceNormals();
-    }
+    };
+
+    loadBuildings = () => {
+        const loader = new THREE.OBJLoader();
+
+        loader.load(window.location.href + '/models/', this.onBuildingLoaded);
+    };
+
+    onBuildingLoaded = (model) => {
+        // our buildings.obj file contains many models
+        // so we have to traverse them to do some initial setup
+
+        this.buildingModels = [...model.children].map((model) => {
+            // scale model down
+            const scale = .01;
+
+            model.scale.set(scale, scale, scale);
+
+            model.position.set(0, -14, 0);
+            model.receiveShadow = true;
+            model.castShadow = true;
+
+            return model;
+        });
+
+        // our list of models are now setup
+    };
 }

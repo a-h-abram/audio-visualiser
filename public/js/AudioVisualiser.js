@@ -5,12 +5,14 @@ class AudioVisualiser {
         this.audioPlayer = null;
         this.audioCtx = null; // audio context
         this.offlineAudio = null;
-        this.parsingAudio = false;
         this.fftSize = 4096; // fast fourier transform lower to be easier to compute windows*/
         this.peakOccurence = 0;
         this.isDrum = false;
         this.isPlaying = false;
-        this.sinceLastDrum = 0;
+        this.timeStart = 0;
+        this.freqCount = 0;
+        this.highFreqAvgCount = 0;
+        this.lowFreqAvgCount = 0;
 
         this.loading = 0;
         this.audioLoaded = false;
@@ -30,9 +32,10 @@ class AudioVisualiser {
         this.audioFile = audioFile;
         this.audioPlayer = audioPlayer;
         this.filteredPlayer = audioPlayer.cloneNode();
+        this.averageFrequencies = 0;
 
         // Web Audio API components initialisation
-        this.audioCtx = new AudioContext();
+        this.audioCtx = new window.AudioContext || window.webkitAudioContext;
         this.analyser = this.audioCtx.createAnalyser();
         this.analyser.fftSize = this.fftSize;
 
@@ -49,8 +52,6 @@ class AudioVisualiser {
         const filterLowPass = this.audioCtx.createBiquadFilter();
 
         filter.type = "lowshelf";
-        // filter.frequency.value = 800;
-        // filter.gain.value = 1500;
 
         filterLowPass.type = "lowpass";
         filterLowPass.frequency.value = 20;
@@ -74,6 +75,7 @@ class AudioVisualiser {
 
         // final steps (play audios & set loading values)
         this.play();
+        this.threeScene.clock.start();
 
         this.audioLoaded = true;
         this.loading = 100;
@@ -156,12 +158,13 @@ class AudioVisualiser {
 
     // should be called in the ThreeJs render method
     render = () => {
-        this.sinceLastDrum += this.threeScene.clock.getDelta();
         this.analyser.getByteFrequencyData(this.audioData);
         this.filterAnalyser.getByteFrequencyData(this.filteredData);
 
         this.isDrum = false;
         let count = 0;
+        let freqSum = 0;
+        let freqCount = 0;
 
         for (let i = 0; i < 100; i++) {
             count = 0;
@@ -170,6 +173,8 @@ class AudioVisualiser {
                 for (let k = i; k < i + 20; k++) {
                     if (this.filteredData[k] > 230) {
                         count++;
+                        freqSum += this.audioData[k];
+                        freqCount++;
                     } else {
                         break;
                     }
@@ -178,22 +183,37 @@ class AudioVisualiser {
                 if (count > 4 && count < 9) {
                     this.peakOccurence++;
                     this.isDrum = true;
-                    this.sinceLastDrum = 0;
+                } else {
+                    this.peakOccurence = 0;
                 }
 
                 break;
             } else {
                 this.peakOccurence = 0;
+
+                freqSum += this.audioData[i];
+                freqCount++;
             }
         }
 
         const overallAvg = this.arrayAverage(this.audioData);
 
+
+        if (overallAvg > 80) {
+            this.highFreqAvgCount++;
+            this.lowFreqAvgCount = 0;
+
+            // console.log('highFreq', this.highFreqAvgCount);
+        } else {
+            this.lowFreqAvgCount++;
+            this.highFreqAvgCount = 0;
+        }
+
         this.threeScene.updatePlane(this.threeScene.groundPlanes[0], this.modulate(overallAvg, 0, .1, .1, .105));
     };
 
     arrayAverage = (arr) => {
-        const total = arr.reduce(function(sum, b) { return sum + b; });
+        const total = arr.reduce((sum, b) => { return sum + b; });
 
         return (total / arr.length);
     };

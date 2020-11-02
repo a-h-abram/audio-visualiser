@@ -1,19 +1,21 @@
 class Clouds {
-    constructor(scene, cloudNbr = 200) {
+    constructor(scene, cloudNbr = 400, cloudTexture = 'imgs/smoke.png', height = 250) {
         this.scene = scene;
         this.cloudNbr = cloudNbr;
+        this.cloudTexture = cloudTexture;
+        this.height = height;
         this.enabled = true;
         this.allMoved = true;
         this.willFlash = false;
         this.cloudParticles = [];
         this.flash = new THREE.PointLight(0x062d89, 30, 500, 1.7);
 
-        this.flash.position.set(200, 200, 100);
+        this.flash.position.set(200, this.height - 50, 100);
         this.scene.add(this.flash);
 
         let loader = new THREE.TextureLoader();
 
-        loader.load(window.location.href + "imgs/smoke.png", (texture) => {
+        loader.load(window.location.href + this.cloudTexture, (texture) => {
             const cloudGeo = new THREE.PlaneBufferGeometry(200, 200);
             const cloudMaterial = new THREE.MeshLambertMaterial({
                 map: texture,
@@ -25,7 +27,7 @@ class Clouds {
 
                 cloud.position.set(
                     Math.random() * 1000 - 500,
-                    250,
+                    this.height,
                     Math.random() * 500 - 450
                 );
 
@@ -47,9 +49,14 @@ class Clouds {
         }
 
         this.cloudParticles.forEach(cloud => {
-            cloud.rotation.z -= 0.002;
+            // cloud.rotation.z -= 0.002;
+            cloud.position.z += 0.4;
 
-            if (!this.enabled && !this.allMoved) {
+            if (cloud.position.z > -50) {
+                cloud.position.z = Math.random() * 500 - 450;
+            }
+
+            /*if (!this.enabled && !this.allMoved) {
                 cloud.position.y += 0.5;
             } else if (this.enabled && !this.allMoved) {
                 cloud.position.y -= 0.5;
@@ -61,14 +68,14 @@ class Clouds {
                 this.allMoved = false;
             } else if (this.enabled && cloud.position.y > 250) {
                 this.allMoved = false;
-            }
+            }*/
         });
 
         if (this.willFlash) {
             if (this.flash.power < 100) {
                 this.flash.position.set(
                     Math.random() * 400,
-                    200 + Math.random() * 200,
+                    (this.height - 50) + Math.random() * 200,
                     100
                 );
             }
