@@ -17,21 +17,21 @@ class RythmLights {
         this.lights = [];
         this.lightsAvailable = [];
 
-        let light1 = new THREE.PointLight(0x0000ff, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
+        const light1 = new THREE.PointLight(0x0000ff, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
 
         light1.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light1.available = true;
         light1.index = 0;
         light1.power = 0;
 
-        let light2 = new THREE.PointLight(0xff0000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
+        const light2 = new THREE.PointLight(0xff0000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
 
         light2.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light2.available = true;
         light2.index = 1;
         light2.power = 0;
 
-        let light3 = new THREE.PointLight(0x008000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
+        const light3 = new THREE.PointLight(0x008000, this.LIGHT_INTENSITY, this.LIGHT_DISTANCE);
 
         light3.position.set(this.camera.position.x, this.LIGHT_HEIGHT, this.camera.position.z);
         light3.available = true;
@@ -45,6 +45,7 @@ class RythmLights {
 
     // call this method to send randomly some lights
     sendLights = (highFreq = false) => {
+        console.log("sendLights has been called");
         // no lights available
         if (this.lightsAvailable === 0) {
             return;
@@ -65,7 +66,7 @@ class RythmLights {
 
         for (let i = 0; i < nbrLightToSend && i < this.lightsAvailable.length; i++) {
             // chose randomly the direction
-            let light = this.lightsAvailable[i];
+            const light = this.lightsAvailable[i];
             const direction = Math.floor(Math.random() * 3);
 
             switch (direction) {
@@ -85,7 +86,7 @@ class RythmLights {
             // send lights to pos
             light.available = false;
             light.position.set(this.camera.position.x, light.position.y, this.camera.position.z);
-            light.power = 1000;
+            light.power = 3000;
 
             this.lightsAvailable.splice(i, 1);
         }

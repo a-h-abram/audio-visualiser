@@ -55,4 +55,8 @@ class Camera {
         this.nextScenePos = nextScenePos;
         this.isMoving = true;
     };
+
+    getPosition = () => { return this.camera.position; }
+
+    getMainCamera = () => { return this.camera; }
 }

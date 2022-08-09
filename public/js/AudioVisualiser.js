@@ -5,7 +5,7 @@ class AudioVisualiser {
         this.audioPlayer = null;
         this.audioCtx = null; // audio context
         this.offlineAudio = null;
-        this.fftSize = 4096; // fast fourier transform lower to be easier to compute windows*/
+        this.fftSize = 2048;//4096; // fast fourier transform lower to be easier to compute windows
         this.peakOccurence = 0;
         this.isDrum = false;
         this.isPlaying = false;
@@ -13,6 +13,12 @@ class AudioVisualiser {
         this.freqCount = 0;
         this.highFreqAvgCount = 0;
         this.lowFreqAvgCount = 0;
+
+        this.drumThreshold = 250; // per default BUT the value adapt itself if it does not detect a drum during 2 seconds
+        this.drumLastDetection = Date.now();
+        this.highestFrequencyBelowDrumThreshold = 0;
+        this.defaultPeakDetection = 230; // Frequency where we start to analyse a peak
+        this.peakAverage = 0;
 
         this.loading = 0;
         this.audioLoaded = false;
@@ -80,6 +86,13 @@ class AudioVisualiser {
         this.audioLoaded = true;
         this.loading = 100;
     };
+
+    /**
+     * We generate a pattern of different events randomly and based on the music rythm
+     */
+    generateAnimationPattern = async() => {
+
+    }
 
     /**
      * This method:
@@ -163,36 +176,104 @@ class AudioVisualiser {
 
         this.isDrum = false;
         let count = 0;
-        let freqSum = 0;
-        let freqCount = 0;
+        let peakAvg = 0; // Give the peak frequency average
+        let peakCount = 0; // Used to calculte the peak average (ponderated average)
 
-        for (let i = 0; i < 100; i++) {
+        // Check if we did not detect a drum since a long time
+        const now = Date.now();
+
+        if (now - this.drumLastDetection >= 2000) {
+            this.drumThreshold = this.peakAverage;
+        } else if (this.peakOccurence > 9) { // Boost the threshold
+            this.drumThreshold += 20;
+            
+            // Clamp the value
+            if (this.drumThreshold > 250) {
+                this.drumThreshold = 250;
+            }
+        }
+
+        let highestFreqIndex = 0;
+        let highestFreq = 0;
+        let freqAvg = 0;
+        const freqCount = 20;
+
+        // 1. Analyse the peak pattern
+        for (let i = 0; i < freqCount; i++) {
+            const freq = this.filteredData[i];
+
+            freqAvg += freq;
+
+            if (freq > highestFreq) {
+                highestFreq = freq;
+                highestFreqIndex = i;
+            }
+        }
+
+        // 2. Once we've detected the highest frequency, we analyse the pattern of the peak
+        // const overallFreqAvg = freqAvg / freqCount;
+        // const diffPeakAndAvg = (highestFreq - overallFreqAvg) / 2;
+
+        // if (diffPeakAndAvg < 0) {
+        //     let freqPeakCount = 0;
+
+        //     for (let i = highestFreqIndex; i < freqCount; i++) {
+        //         const freq = this.filteredData[i];
+
+        //         if (freq > overallFreqAvg && freq >= (highestFreq - diffPeakAndAvg)) {
+        //             freqPeakCount++;
+        //         }
+        //     }
+
+        //     // Now we've got a drum threshold
+        // }
+
+
+        // 2. Apply the drum detection
+        for (let i = 0; i < 25; i++) {
+            const freq = this.filteredData[i];
             count = 0;
 
-            if (this.filteredData[i] > 250) {
+            // Register the highest frequency detected
+            if (freq < this.drumThreshold && freq > this.highestFrequencyBelowDrumThreshold) {
+                this.highestFrequencyBelowDrumThreshold = freq;
+            }
+
+            // Detect the start of a peak
+            if (this.filteredData[i] > this.drumThreshold) {
+                // Parse the 20 next freq peak
                 for (let k = i; k < i + 20; k++) {
-                    if (this.filteredData[k] > 230) {
+                    peakAvg += this.filteredData[k];
+                    peakCount++;
+                    
+                    if (this.filteredData[k] > this.defaultPeakDetection) {
                         count++;
-                        freqSum += this.audioData[k];
-                        freqCount++;
                     } else {
                         break;
                     }
                 }
 
                 if (count > 4 && count < 9) {
+                    // Avoid divisions by zero
+                    if (peakCount > 0) {
+                        this.peakAverage = peakAvg / peakCount;
+                        console.log("peakAvg: " + peakAvg / peakCount);
+                    }
+                    
                     this.peakOccurence++;
                     this.isDrum = true;
+                    console.log('drum detected');
+                    this.drumLastDetection = Date.now();
                 } else {
                     this.peakOccurence = 0;
                 }
 
                 break;
             } else {
+                peakAvg = 0;
+                peakCount = 0;
+                // this.peakAverage = 0;
                 this.peakOccurence = 0;
-
-                freqSum += this.audioData[i];
-                freqCount++;
             }
         }
 

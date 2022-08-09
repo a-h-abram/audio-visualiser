@@ -14,5 +14,8 @@
     "express": "^4.17.1",
     "scrollmagic": "^2.0.7",
     "twig": "^1.15.2"
+  },
+  "nodemonConfig": {
+    "ext": "js,html"
   }
 }

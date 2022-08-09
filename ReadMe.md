@@ -16,6 +16,22 @@ I used Web Audio API to do all audio processing.
 - Three.js - used for rendering the 3D scene
 - SimplexNoise - used to animate the ground plane
 
+## Pre-requistes
+- Node.js
+- Nodemon (installed globally)
+
+## Setup
+
+- Install dependencies
+```
+npm install
+```
+
+- Run the project (will run on port 8080)
+```
+npm start
+```
+
 ## Technical Description
 Before playing music:  
 - Receiving the song from input
@@ -35,7 +51,6 @@ During the music:
 ## Author
 - Anas Habib ABRAM
 > Contact: anas-habib.abram@hotmail.com  
-> Personal Achievement: "I know how to make coffee"
 
 ## License
 MIT  

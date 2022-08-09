@@ -5,6 +5,8 @@ class ThreeScene {
     };
     constructor() {
         this.clock = new THREE.Clock();
+        this._cameraTimer = null;
+        this._cameraEventDuration = null;
         this.audioLoaded = false;
         this.loading = false;
         this.loadingBar = document.getElementById("loading-bar");
@@ -25,7 +27,7 @@ class ThreeScene {
         this.setupRenderer();
         this.setupCamera();
 
-        this.rythmLights = new RythmLights(this.scene, this.camera.camera);
+        this.rythmLights = new RythmLights(this.scene, this._camera.getMainCamera());
 
         this.setupLights();
         this.setupMainScene();
@@ -40,8 +42,8 @@ class ThreeScene {
 
     setupListeners = () => {
         window.addEventListener('resize', _ => {
-            this.camera.camera.aspect = window.innerWidth / window.innerHeight;
-            this.camera.camera.updateProjectionMatrix();
+            this._camera.getMainCamera().aspect = window.innerWidth / window.innerHeight;
+            this._camera.getMainCamera().updateProjectionMatrix();
 
             this.renderer.setSize(window.innerWidth, window.innerHeight);
             this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -72,8 +74,8 @@ class ThreeScene {
     };
 
     setupCamera = () => {
-        this.camera = new Camera();
-        this.camera.scenePos = this.SCENE_POS.GROUND;
+        this._camera = new Camera();
+        this._camera.scenePos = this.SCENE_POS.GROUND;
     };
 
     setupLights = () => {
@@ -92,7 +94,7 @@ class ThreeScene {
         this.composer = new THREE.EffectComposer(this.renderer);
 
         this.composer.setPixelRatio(window.devicePixelRatio);
-        this.composer.addPass(new THREE.RenderPass(this.scene, this.camera.camera));
+        this.composer.addPass(new THREE.RenderPass(this.scene, this._camera.camera));
     };
 
     setupGlitchEffect = () => {
@@ -136,7 +138,7 @@ class ThreeScene {
             this.rain.enable();
         }
 
-        const planeGeometry = new THREE.PlaneGeometry(1000, 2000, 30, 30);
+        const planeGeometry = new THREE.PlaneGeometry(2000, 2000, 30, 30);
         const planeMaterial = new THREE.MeshLambertMaterial({
             color: 0x6904ce,
             side: THREE.DoubleSide,
@@ -208,17 +210,17 @@ class ThreeScene {
     };
 
     updateSky = () => {
-        if (this.camera.isMoving && this.camera.nextScenePos === this.SCENE_POS.SKY) {
+        if (this._camera.isMoving && this._camera.nextScenePos === this.SCENE_POS.SKY) {
             gsap.to(this.timeEffectCtrl, {
-                duration: this.camera.duration,
+                duration: this._camera.duration,
                 azimuth: 0.25,
                 rayleigh: 1.46,
                 turbidity: 14,
                 exposure: 0.5
             });
-        } else if (this.camera.isMoving && this.camera.nextScenePos === this.SCENE_POS.GROUND) {
+        } else if (this._camera.isMoving && this._camera.nextScenePos === this.SCENE_POS.GROUND) {
             gsap.to(this.timeEffectCtrl, {
-                duration: this.camera.duration,
+                duration: this._camera.duration,
                 azimuth: 0.25,
                 rayleigh: 3,
                 turbidity: 10,
@@ -226,7 +228,7 @@ class ThreeScene {
             });
         }
 
-        let uniforms = this.sky.material.uniforms;
+        const uniforms = this.sky.material.uniforms;
 
         uniforms.turbidity.value = this.timeEffectCtrl.turbidity;
         uniforms.rayleigh.value = this.timeEffectCtrl.rayleigh;
@@ -259,10 +261,12 @@ class ThreeScene {
 
         this.flashShader.uniforms.white.value = 0;
 
+        // We've detected a drum
         if (this.audioVisualiser.isDrum) {
             this.animationSpeed = 3;
-            console.log(this.audioVisualiser.peakOccurence);
+            console.log("Visualizer peak occurence: " + this.audioVisualiser.peakOccurence);
 
+            // RGB Shift Effect
             if (this.audioVisualiser.peakOccurence > 5) {
                 this.rgbShiftCtrl.angle = 2.5 * (this.audioVisualiser.peakOccurence / 20) * ((Math.floor(Math.random() * 2) + 1 === 1) ? 1 : -1);
                 this.rgbShiftCtrl.rgbAmount = 0.005 * (this.audioVisualiser.peakOccurence / 20);
@@ -270,19 +274,37 @@ class ThreeScene {
 
             this.rainClouds.willFlash = true;
 
-            if (this.audioVisualiser.peakOccurence === 1) {
-                this.flashShader.uniforms.white.value = .015;
-            } else if (this.audioVisualiser.peakOccurence === 5) {
-                this.rythmLights.sendLights(this.audioVisualiser.averageFrequencies > 200);
+            switch (this.audioVisualiser.peakOccurence) {
+                case 3:
+                    // Flash
+                    this.flashShader.uniforms.white.value = .025;
+                    break;
+                case 5:
+                    // Some lights patterns
+                    this.rythmLights.sendLights(this.audioVisualiser.peakAverage > 200);
+                    break;
+                default:
+                    // Nothing
+                    break;
             }
         }
 
-        if (this.audioVisualiser.highFreqAvgCount > 150 && this.camera.scenePos !== this.SCENE_POS.SKY
-            && !this.camera.isMoving) {
-            this.camera.moveTop(1, this.SCENE_POS.SKY);
-        } else if (this.audioVisualiser.lowFreqAvgCount > 200 && this.camera.scenePos !== this.SCENE_POS.GROUND
-            && !this.camera.isMoving) {
-            this.camera.moveBot(1, this.SCENE_POS.GROUND);
+        const now = new Date().getTime();
+
+        if (this._cameraTimer) {
+            console.log('diff: ' + (now - this._cameraTimer));
+            console.log('cameventdur=' + this._cameraEventDuration);
+        }
+
+        if (this.audioVisualiser.highFreqAvgCount > 150 && this._camera.scenePos !== this.SCENE_POS.SKY
+            && !this._camera.isMoving) {
+            this._cameraTimer = new Date().getTime();
+            this._cameraEventDuration = Math.floor(Math.random() * (10 - 5) + 5) * 1000; // wait between 5 and 10 seconds (in ms)
+            this._camera.moveTop(1, this.SCENE_POS.SKY);
+        } else if (this.audioVisualiser.lowFreqAvgCount > 200 && this._camera.scenePos !== this.SCENE_POS.GROUND
+            && !this._camera.isMoving && this._cameraTimer && (now - this._cameraTimer) > this._cameraEventDuration) {
+            this._cameraTimer = null; // reset timer
+            this._camera.moveBot(0.5, this.SCENE_POS.GROUND);
         }
 
         // update objects in the scene
@@ -292,7 +314,7 @@ class ThreeScene {
         this.rythmLights.update();
         this.movePlanes();
         this.updateSky();
-        this.camera.update();
+        this._camera.update();
 
         // update post-process effects
         this.updateRgbShift();
@@ -321,19 +343,42 @@ class ThreeScene {
 
     };
 
+    
+
     updatePlane = (mesh, distortionFr) => {
         const self = this;
+        const camPos = this._camera.getPosition();
 
-        mesh.geometry.vertices.forEach(function (vertex, i) {
-            const amp = 2;
+        mesh.geometry.vertices.forEach((vertex, i) => {
             const time = Date.now();
-            vertex.z = (self.noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
+            const roadLength = 150;
+            const planeWidth = 50;
+            const midWith = planeWidth / 2;
+            let amp = 3;
+            let distance = 1;
+            let distanceRatio = 1;
+            
+            // Check the vertex X and Y
+            // If the x and Y are near the camera, amp = 2
+            // Else => amp = 10
+
+            if ((vertex.x > midWith + roadLength || vertex.x < midWith - roadLength) && (vertex.y > midWith + roadLength || vertex.y < midWith - roadLength)) {
+                const x = vertex.x - ((vertex.x > midWith + roadLength) ? (midWith + roadLength) : (midWith - roadLength));
+                const y = vertex.y - ((vertex.y > midWith + roadLength) ? (midWith + roadLength) : (midWith - roadLength));
+                
+                // distance = Math.sqrt((x * x) + (y * y));
+                // distanceRatio = 1 / distance * 100;
+                amp = 15;
+            }
+            
+            vertex.z = (self.noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * (amp * distanceRatio);
         });
 
         mesh.geometry.verticesNeedUpdate = true;
-        mesh.geometry.normalsNeedUpdate = true;
+        // mesh.geometry.normalsNeedUpdate = true;
+        
         mesh.geometry.computeVertexNormals();
-        mesh.geometry.computeFaceNormals();
+        // mesh.geometry.computeFaceNormals();
     };
 
     loadBuildings = () => {
