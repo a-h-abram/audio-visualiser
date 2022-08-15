@@ -86,7 +86,7 @@ class RythmLights {
             // send lights to pos
             light.available = false;
             light.position.set(this.camera.position.x, light.position.y, this.camera.position.z);
-            light.power = 3000;
+            light.power = 5000;
 
             this.lightsAvailable.splice(i, 1);
         }
@@ -109,7 +109,7 @@ class RythmLights {
 
     shuffleLights = () => {
         for (let i = this.lightsAvailable.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = randomBetween(0, i);
             const temp = this.lightsAvailable[i];
 
             this.lightsAvailable[i] = this.lightsAvailable[j];

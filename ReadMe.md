@@ -7,10 +7,11 @@
 
 ## Description
 This is a website that propose an auditive experience.  
-Based on the user music, the website adapt its animations based on the drums of your music.  
-I advise you to put a music with some drums and bass. The algorithm is much more efficient with 
+Based on the user music, the website adapt its animations based on the drums and rythm of your music.  
+**I advise you to choose a music with good rythm (drums and bass) for more visual effect.**  
+The algorithm is much more efficient with 
 electro, trans, dupstep or even rap music.  
-I used Web Audio API to do all audio processing.
+I used Web Audio API for all audio processing
 
 ## Dependencies
 - Three.js - used for rendering the 3D scene
@@ -42,14 +43,8 @@ correctly drums
 - Applying a gain filter (without it, the frequencies are too low to detect drums & bass)
 - Playing the original song & live-analysing the filtered song
 
-During the music:
-- Getting the current frequencies in byte format
-- Detecting the highest frequencies and parsing the next 20/50 bytes
-- If the next x frequencies are still high, it's probably a drum or a bass
-- If its a drum, I send the information to the 3D scene to increase animation speed, apply some shaders, ...
-
 ## Author
-- Anas Habib ABRAM
+- Anas ABRAM
 > Contact: anas-habib.abram@hotmail.com  
 
 ## License

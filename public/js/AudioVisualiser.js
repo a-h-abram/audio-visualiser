@@ -212,7 +212,7 @@ class AudioVisualiser {
 
         // 2. Once we've detected the highest frequency, we analyse the pattern of the peak
         // const overallFreqAvg = freqAvg / freqCount;
-        // const diffPeakAndAvg = (highestFreq - overallFreqAvg) / 2;
+        // const diffPeakAndAvg = (highestFreq - overallFreqAvg) * 0.5;
 
         // if (diffPeakAndAvg < 0) {
         //     let freqPeakCount = 0;
@@ -257,12 +257,12 @@ class AudioVisualiser {
                     // Avoid divisions by zero
                     if (peakCount > 0) {
                         this.peakAverage = peakAvg / peakCount;
-                        console.log("peakAvg: " + peakAvg / peakCount);
+                        // console.log("peakAvg: " + peakAvg / peakCount);
                     }
                     
                     this.peakOccurence++;
                     this.isDrum = true;
-                    console.log('drum detected');
+                    // console.log('drum detected');
                     this.drumLastDetection = Date.now();
                 } else {
                     this.peakOccurence = 0;

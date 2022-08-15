@@ -12,21 +12,18 @@
  * Three.js integration by zz85 http://twitter.com/blurspline
  */
 
-Sky = function () {
-
+Sky = function() {
     const shader = THREE.SkyShader;
-
-    const material = new THREE.ShaderMaterial( {
+    const material = new THREE.ShaderMaterial({
         name: 'SkyShader',
         fragmentShader: shader.fragmentShader,
         vertexShader: shader.vertexShader,
         uniforms: THREE.UniformsUtils.clone( shader.uniforms ),
         side: THREE.BackSide,
         depthWrite: false
-    } );
+    });
 
-    THREE.Mesh.call( this, new THREE.BoxBufferGeometry( 1, 1, 1 ), material );
-
+    THREE.Mesh.call(this, new THREE.BoxBufferGeometry(1, 1, 1), material);
 };
 
 Sky.prototype = Object.create( THREE.Mesh.prototype );
@@ -39,7 +36,7 @@ THREE.SkyShader = {
         "mieCoefficient": { value: 0.005 },
         "mieDirectionalG": { value: 0.8 },
         "sunPosition": { value: new THREE.Vector3() },
-        "up": { value: new THREE.Vector3( 0, 1, 0 ) }
+        "up": { value: new THREE.Vector3(0, 1, 0) }
     },
 
     vertexShader: [
